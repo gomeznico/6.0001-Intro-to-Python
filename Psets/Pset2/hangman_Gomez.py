@@ -145,7 +145,7 @@ def hangman(secret_word):
       if is_word_guessed(secret_word, letters_guessed):
         print("Congratulations, you won! ")
         total_score = base_score*guesses_remaining
-        print("You're total scroe for this game is: ", total_score)
+        print("You're total score for this game is: ", total_score)
         break
 
       print("You have ", guesses_remaining, " guesses left" )
@@ -155,34 +155,30 @@ def hangman(secret_word):
 
       ## check if input is a letter and reduce warnings/guesses
       if not guessed_letter.isalpha():
-        print("Oops! That is not a valid letter.")
         #reduce warnings if enough avaliable
         if warnings_remaining > 0:
           warnings_remaining += -1
-          print ("You have", warnings_remaining, "warnings left: ", game_state)
+          print ("Oops! That is not a valid letter. You have", warnings_remaining, "warnings left: ", game_state)
         # reduce guess counter if no more warnings
         else:
           guesses_remaining += -1
-          print ("You have no warnings left, so you lose one guess:", game_state)
+          print ("Oops! That is not a valid letter. You have no warnings left, so you lose one guess:", game_state)
         #return back to top of while loop for next guess
-        pass
+        continue
 
       ## check if input has been guessed already and reduce warnings/guesses
       guessed_letter = guessed_letter.lower()
       if guessed_letter in letters_guessed:
-        print ("Oops! You've already guessed that letter.")
         #reduce warnings if enough avaliable
         if warnings_remaining > 0:
           warnings_remaining += -1
-          print ("You have", warnings_remaining, "warnings left: ", game_state)
+          print ("Oops! You've already guessed that letter. You have", warnings_remaining, "warnings left: ", game_state)
         # reduce guess counter if no more warnings
         else:
           guesses_remaining += -1
-          print ("You have no warnings left, so you lose one guess:", game_state)
+          print ("Oops! You've already guessed that letter. You have no warnings left, so you lose one guess:", game_state)
         #return back to top of while loop for next guess
-        print('this should show up')
-        pass
-        print('this should show up')
+        continue
 
       ## letter is valid, so add to letters guessed
       letters_guessed.append(guessed_letter)
@@ -198,12 +194,13 @@ def hangman(secret_word):
           guesses_remaining += -1
         print("Oops! That letter is not in my word: ", game_state)
         #return back to top of while loop for next guess
-        pass
+        continue
       game_state = new_gamestate
       print("Good guess: ", game_state)
 
-      if guesses_remaining == 0:
-        print("Sorry, you ran out of guesses. The word was: ", secret_word)
+    if guesses_remaining == 0:
+      print("-----------")
+      print("Sorry, you ran out of guesses. The word was: ", secret_word)
 
 
 # When you've completed your hangman function, scroll down to the bottom
@@ -290,7 +287,7 @@ if __name__ == "__main__":
     # uncomment the following two lines.
 
     secret_word = choose_word(wordlist)
-    hangman('tact')
+    hangman(secret_word)
 
 ###############
 
