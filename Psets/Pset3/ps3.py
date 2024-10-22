@@ -41,7 +41,8 @@ SCRABBLE_LETTER_VALUES = {
     'w': 4,
     'x': 8,
     'y': 4,
-    'z': 10
+    'z': 10,
+    '*': 0
 }
 
 # -----------------------------------
@@ -116,8 +117,16 @@ def get_word_score(word, n):
     n: int >= 0
     returns: int >= 0
     """
+    word = word.lower()
 
-    pass  # TO DO... Remove this line when you implement this function
+    first_component = 0
+    for letter in word:
+        first_component += SCRABBLE_LETTER_VALUES[letter]
+
+    second_component = max(7*len(word) - 3*(n-len(word)) , 1)
+
+    score = first_component * second_component
+    return score
 
 #
 # Make sure you understand how this function works and what it does!
@@ -161,9 +170,11 @@ def deal_hand(n):
     hand={}
     num_vowels = int(math.ceil(n / 3))
 
-    for i in range(num_vowels):
+    for i in range(1, num_vowels):
         x = random.choice(VOWELS)
         hand[x] = hand.get(x, 0) + 1
+
+    hand["*"] = 1
 
     for i in range(num_vowels, n):
         x = random.choice(CONSONANTS)
@@ -192,13 +203,24 @@ def update_hand(hand, word):
     hand: dictionary (string -> int)
     returns: dictionary (string -> int)
     """
+    word = word.lower()
 
-    pass  # TO DO... Remove this line when you implement this function
+    new_hand = hand.copy()
+    for letter in word:
+        # if dict key exists, reduce by 1
+        if new_hand[letter]:
+            new_hand[letter] = new_hand.get(letter) - 1
+        # if dict key goes negative, remove from dict
+        if new_hand.get(letter) <= 0:
+            new_hand.pop(letter)
+
+    return new_hand
+
 
 #
 # Problem #3: Test word validity
 #
-def is_valid_word(word, hand, word_list):
+def is_valid_word(input_word, hand, word_list):
     """
     Returns True if word is in the word_list and is entirely
     composed of letters in the hand. Otherwise, returns False.
@@ -210,7 +232,51 @@ def is_valid_word(word, hand, word_list):
     returns: boolean
     """
 
-    pass  # TO DO... Remove this line when you implement this function
+    ## assumption, only 1 wildcard is possible to play at a time
+
+    word = input_word.lower()
+    wildcard_index = word.find("*")     # get possible index of wildcard, -1 if does not exist
+    wildcard_substitutions = ['a','e','i','o','u']
+
+    ## create wildcard vowel subst. for later checking
+    for i in range(5):
+        wildcard_substitutions[i] = word.replace("*", VOWELS[i])
+
+
+    ## First check if submitted word is valid at all in wordlist
+    is_in_wordlist = False
+    for possible_word in word_list:
+        # if wildcard exists, check each possible vowel construction
+        if wildcard_index >= 0:
+            for constructed_word in wildcard_substitutions:
+                if constructed_word == possible_word:
+                    is_in_wordlist = True
+            if is_in_wordlist:
+                # as soon as 1 word is found, break wordlist forloop
+                break
+        # if no wildcard exists, check the word as submitted
+        if word == possible_word:
+            is_in_wordlist = True
+            # as soon as 1 word is found, break wordlist forloop
+            break
+
+    # if no word has been found
+    if not is_in_wordlist:
+        return False
+
+    temp_hand = hand.copy()
+    for character in word:
+        count = temp_hand.get(character)
+        if not count:
+            # if character does not exist in hand, count is None, so not valid word
+            return False
+        temp_hand[character] += -1
+        if temp_hand.get(character) == 0:
+            temp_hand.pop(character)
+
+    # if no failures found, must be true
+    return True
+
 
 #
 # Problem #5: Playing a hand
