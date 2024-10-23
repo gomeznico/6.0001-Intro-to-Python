@@ -123,6 +123,7 @@ def get_word_score(word, n):
     for letter in word:
         first_component += SCRABBLE_LETTER_VALUES[letter]
 
+
     second_component = max(7*len(word) - 3*(n-len(word)) , 1)
 
     score = first_component * second_component
@@ -288,8 +289,11 @@ def calculate_handlen(hand):
     hand: dictionary (string-> int)
     returns: integer
     """
+    count = 0
+    for character in hand:
+        count += hand.get(character)
 
-    pass  # TO DO... Remove this line when you implement this function
+    return count
 
 def play_hand(hand, word_list):
 
@@ -322,8 +326,8 @@ def play_hand(hand, word_list):
 
     """
 
-    # BEGIN PSEUDOCODE <-- Remove this comment when you implement this function
     # Keep track of the total score
+
 
     # As long as there are still letters left in the hand:
 
@@ -354,7 +358,29 @@ def play_hand(hand, word_list):
 
     # Return the total score as result of function
 
+    score = 0
 
+    while calculate_handlen(hand) > 0:
+        print('Current hand: ',end=' ')
+        display_hand(hand)
+        word = input('Enter word, or "!!" to indicate that you are finished: ')
+        if word == '!!':
+            break
+        if is_valid_word(word, hand, word_list):
+            word_score = get_word_score(word, calculate_handlen(hand))
+            score += word_score
+            print('"', word,'" earned', word_score, 'points. Total: ', score, 'points')
+            print()
+        else:
+            print('That is not a valid word. Please choose another word.')
+        hand = update_hand(hand, word)
+
+    if calculate_handlen(hand) == 0:
+        print('Ran out of letters. Total score: ', score, 'points')
+    else:
+        print('Total score: ', score, ' points')
+
+    return score
 
 #
 # Problem #6: Playing a game
@@ -387,9 +413,21 @@ def substitute_hand(hand, letter):
     letter: string
     returns: dictionary (string -> int)
     """
+    new_hand = hand.copy()
 
-    pass  # TO DO... Remove this line when you implement this function
+    # create dict of possible letter choices
+    alphabet = SCRABBLE_LETTER_VALUES.copy()
 
+    # remove letters that are already in the hand
+    for character in hand.keys():
+        alphabet.pop(character)
+
+    possible_new_letters = list(alphabet.keys())
+    choice = random.choice(possible_new_letters)
+
+    new_hand[choice] = new_hand.pop(letter)
+
+    return new_hand
 
 def play_game(word_list):
     """
@@ -422,7 +460,31 @@ def play_game(word_list):
     word_list: list of lowercase strings
     """
 
-    print("play_game not implemented.") # TO DO... Remove this line when you implement this function
+    num_hands = int(input('Enter total number of hands: '))
+
+    total_score = 0
+
+    for i in range(num_hands):
+        hand = deal_hand(HAND_SIZE)
+        print('Current hand: ',end=' ')
+        display_hand(hand)
+        will_substitute = input('Would you like to substitute a letter? (yes/no): ')
+
+        if will_substitute == 'yes':
+            letter = input('Which letter would you like to replace: ')
+            hand = substitute_hand(hand, letter)
+
+        ## play the hand, but do not 'save score' until player says no to replaying
+        replay = True
+        while replay == True:
+            hand_score = play_hand(hand, word_list)
+            print('----------')
+            will_replay = input('Would you like to replay the hand? (yes/no): ')
+            if will_replay == 'no':
+                replay = False
+                total_score += hand_score
+
+    print('Total score over all hands: ', total_score)
 
 
 
