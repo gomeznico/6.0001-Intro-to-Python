@@ -461,6 +461,9 @@ def play_game(word_list):
     """
 
     num_hands = int(input('Enter total number of hands: '))
+    has_substituted_letter = False
+    has_replayed_game = False
+
 
     total_score = 0
 
@@ -468,21 +471,28 @@ def play_game(word_list):
         hand = deal_hand(HAND_SIZE)
         print('Current hand: ',end=' ')
         display_hand(hand)
-        will_substitute = input('Would you like to substitute a letter? (yes/no): ')
 
-        if will_substitute == 'yes':
-            letter = input('Which letter would you like to replace: ')
-            hand = substitute_hand(hand, letter)
+        # offer letter subst. if player has not done so already
+        if not has_substituted_letter:
+            will_substitute = input('Would you like to substitute a letter? (yes/no): ')
+            if will_substitute == 'yes':
+                has_substituted_letter = True
+                letter = input('Which letter would you like to replace: ')
+                hand = substitute_hand(hand, letter)
 
-        ## play the hand, but do not 'save score' until player says no to replaying
-        replay = True
-        while replay == True:
-            hand_score = play_hand(hand, word_list)
-            print('----------')
+        # play the hand, with the subst. hand if done so
+        hand_score = play_hand(hand, word_list)
+        print('----------')
+
+        # offer replay of game if player has not done so already
+        if not has_replayed_game:
             will_replay = input('Would you like to replay the hand? (yes/no): ')
-            if will_replay == 'no':
-                replay = False
-                total_score += hand_score
+            if will_replay == 'yes':
+                has_replayed_game = True
+                new_hand_score = play_hand(hand, word_list)
+                hand_score = max(hand_score,new_hand_score)
+
+        total_score += hand_score
 
     print('Total score over all hands: ', total_score)
 
