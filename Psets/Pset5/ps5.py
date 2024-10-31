@@ -246,12 +246,37 @@ def read_trigger_config(filename):
         if not (len(line) == 0 or line.startswith('//')):
             lines.append(line)
 
-    # TODO: Problem 11
-    # line is the list of lines that you need to parse and for which you need
-    # to build triggers
+    trigger_map ={
+        'TITLE': TitleTrigger,
+        'DESCRIPTION': DescriptionTrigger,
+        'AFTER': AfterTrigger,
+        'BEFORE': BeforeTrigger,
+        'NOT': NotTrigger,
+        'AND': AndTrigger,
+        'OR': OrTrigger
+    }
 
-    print(lines) # for now, print it so you see what it contains!
+    triggers_dict = {}
+    triggers_list = []
 
+    for line in lines:
+        line_arr = line.split(',')
+        if line_arr[0] != 'ADD':
+            name = line_arr.pop(0)
+            type = line_arr.pop(0)
+            if type in ['AND','OR']:
+                trig1 = triggers_dict[line_arr.pop(0)]
+                trig2 = triggers_dict[line_arr.pop(0)]
+                triggers_dict[name] = trigger_map[type](trig1,trig2)
+            else:
+                arg = "".join(line_arr)
+                triggers_dict[name] = trigger_map[type](arg)
+        else:
+            line_arr.pop(0) # remove 'ADD', and iterate through list
+            for trigger_name in line_arr:
+                triggers_list.append(triggers_dict[trigger_name])
+
+    return triggers_list
 
 
 SLEEPTIME = 120 #seconds -- how often we poll
@@ -268,7 +293,7 @@ def main_thread(master):
 
         # Problem 11
         # TODO: After implementing read_trigger_config, uncomment this line
-        # triggerlist = read_trigger_config('triggers.txt')
+        triggerlist = read_trigger_config('triggers.txt')
 
         # HELPER CODE - you don't need to understand this!
         # Draws the popup window that displays the filtered stories
@@ -319,11 +344,11 @@ def main_thread(master):
         print(e)
 
 
-# if __name__ == '__main__':
-#     root = Tk()
-#     root.title("Some RSS parser")
-#     t = threading.Thread(target=main_thread, args=(root,))
-#     t.start()
-#     root.mainloop()
+if __name__ == '__main__':
+    root = Tk()
+    root.title("Some RSS parser")
+    t = threading.Thread(target=main_thread, args=(root,))
+    t.start()
+    root.mainloop()
 
-read_trigger_config('triggers.txt')
+
