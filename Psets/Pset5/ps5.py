@@ -1,5 +1,5 @@
 # 6.0001/6.00 Problem Set 5 - RSS Feed Filter
-# Name:
+# Name: Nico Gomez
 # Collaborators:
 # Time:
 
@@ -54,8 +54,38 @@ def process(url):
 
 # Problem 1
 
-# TODO: NewsStory
+class NewsStory(object):
+    """
+    initializes NewsStory object
 
+    has 5 attributes:
+        self.guid (string, a Global Unique ID)
+        self.title  (string, story title)
+        self.description (string, story description)
+        self.link (string, link to story)
+        self.pubdate (datetime, publication date)
+    """
+    def __init__(self, guid, title, description, link, pubdate):
+        self.guid = guid
+        self.title = title
+        self.description = description
+        self.link = link
+        self.pubdate = pubdate
+
+    def get_guid(self):
+        return self.guid
+
+    def get_title(self):
+        return self.title
+
+    def get_description(self):
+        return self.description
+
+    def get_link(self):
+        return self.link
+
+    def get_pubdate(self):
+        return self.pubdate
 
 #======================
 # Triggers
@@ -73,37 +103,107 @@ class Trigger(object):
 # PHRASE TRIGGERS
 
 # Problem 2
-# TODO: PhraseTrigger
+class PhraseTrigger(Trigger):
+    def __init__(self, phrase):
+        """
+        Subclass of trigger with one extra attribute
+
+        self.phrase (string, phrase to trigger, assume phrase does not contain punctuation or multiple spaces between words)
+
+        """
+        self.phrase = phrase
+
+    def is_phrase_in(self, text):
+        """
+        Returns True if self.phrase is in the text
+
+        will return true regardless of case, punctuation, spaces.
+        will return false if order is incorrect, spaces, or words break up phrase
+        """
+
+        ## remove cases and replace punctuation with spaces
+        trans_dict = str.maketrans(string.punctuation, ' '*(len(string.punctuation)))
+
+        no_punct_text = text.lower().translate(trans_dict)
+        cleaned_text = ' '.join(no_punct_text.split()) + ' '
+
+        no_punct_phrase = self.phrase.lower().translate(trans_dict)
+        cleaned_phrase = ' '.join(no_punct_phrase.split()) + ' '
+
+        if cleaned_phrase not in cleaned_text:
+            return False
+        else:
+            return True
 
 # Problem 3
-# TODO: TitleTrigger
+class TitleTrigger(PhraseTrigger):
+    def evaluate(self, story):
+        return self.is_phrase_in(story.get_title())
 
 # Problem 4
-# TODO: DescriptionTrigger
+class DescriptionTrigger(PhraseTrigger):
+    def evaluate(self, story):
+        return self.is_phrase_in(story.get_description())
 
 # TIME TRIGGERS
 
 # Problem 5
-# TODO: TimeTrigger
-# Constructor:
-#        Input: Time has to be in EST and in the format of "%d %b %Y %H:%M:%S".
-#        Convert time from string to a datetime before saving it as an attribute.
+class TimeTrigger(Trigger):
+    def __init__(self, date_string):
+        """
+        date_string (string, date in EST format: '3 Oct 2016 17:00:10')
+        """
+
+        time = datetime.strptime(date_string,"%d %b %Y %H:%M:%S")
+        self.time = time
 
 # Problem 6
 # TODO: BeforeTrigger and AfterTrigger
+class BeforeTrigger(TimeTrigger):
+    def evaluate(self, story):
+        # return true if pubdate is before trigger time
+        try:
+            return story.get_pubdate() < self.time
+        except TypeError:
+            time = self.time.replace(tzinfo=pytz.timezone("EST"))
+            return story.get_pubdate() < time
 
+class AfterTrigger(TimeTrigger):
+    def evaluate(self, story):
+        # return true if pubdate is before trigger time
+        try:
+            return story.get_pubdate() > self.time
+        except TypeError:
+            time = self.time.replace(tzinfo=pytz.timezone("EST"))
+            return story.get_pubdate() > time
 
 # COMPOSITE TRIGGERS
 
 # Problem 7
-# TODO: NotTrigger
+class NotTrigger(Trigger):
+        def __init__(self, trigger):
+            self.trigger = trigger
+
+        def evaluate(self, story):
+            return not self.trigger.evaluate(story)
 
 # Problem 8
-# TODO: AndTrigger
+class AndTrigger(Trigger):
+        def __init__(self, trigger1, trigger2):
+            self.trigger1 = trigger1
+            self.trigger2 = trigger2
+
+        def evaluate(self, story):
+            return  (self.trigger1.evaluate(story) & self.trigger2.evaluate(story))
 
 # Problem 9
-# TODO: OrTrigger
+class OrTrigger(Trigger):
+        def __init__(self, trigger1, trigger2):
+            self.trigger1 = trigger1
+            self.trigger2 = trigger2
 
+        def evaluate(self, story):
+            return  (self.trigger1.evaluate(story) or self.trigger2.evaluate(story))
 
 #======================
 # Filtering
@@ -116,12 +216,15 @@ def filter_stories(stories, triggerlist):
 
     Returns: a list of only the stories for which a trigger in triggerlist fires.
     """
-    # TODO: Problem 10
-    # This is a placeholder
-    # (we're just returning all the stories, with no filtering)
-    return stories
+    triggered_stories =[]
 
+    for story in stories:
+        for trigger in triggerlist:
+            if trigger.evaluate(story):
+                triggered_stories.append(story)
+                break # go to next story as soon as a trigger is true
 
+    return triggered_stories
 
 #======================
 # User-Specified Triggers
@@ -159,7 +262,7 @@ def main_thread(master):
     try:
         t1 = TitleTrigger("election")
         t2 = DescriptionTrigger("Trump")
-        t3 = DescriptionTrigger("Clinton")
+        t3 = DescriptionTrigger("Kamala")
         t4 = AndTrigger(t2, t3)
         triggerlist = [t1, t4]
 
@@ -216,10 +319,11 @@ def main_thread(master):
         print(e)
 
 
-if __name__ == '__main__':
-    root = Tk()
-    root.title("Some RSS parser")
-    t = threading.Thread(target=main_thread, args=(root,))
-    t.start()
-    root.mainloop()
+# if __name__ == '__main__':
+#     root = Tk()
+#     root.title("Some RSS parser")
+#     t = threading.Thread(target=main_thread, args=(root,))
+#     t.start()
+#     root.mainloop()
 
+read_trigger_config('triggers.txt')
